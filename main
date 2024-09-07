@@ -1,0 +1,112 @@
+import scrapy
+from pymongo import MongoClient
+import tweepy
+import requests
+
+# MongoDB Setup
+client = MongoClient("mongodb://localhost:27017/")
+db = client['disaster_news_db']
+collection = db['news_articles']
+
+# Tweepy Setup
+#def connect_to_twitter_api():
+ #   consumer_key = "uBgUApxnRp2qsFHrh5hkURrx5"
+ #   consumer_secret = "thT5xEdmyB3MQLJU8nZUSQ9xdxjOeOKBSukr5CsRUpPOdSjnqB"
+  #  access_token = "1832474050914086913-WK0ttHaUDMgH92Wg93tcT6J8LjgrPh"
+   # access_token_secret = "Otd1Tuc7BefIupZL0XE6Hl1JbW2jcauNtuunneVg5Wi75"
+
+    #auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    #auth.set_access_token(access_token, access_token_secret)
+    #return tweepy.API(auth)
+
+
+def fetch_facebook_data(access_token, page_id):
+    url = f'https://graph.facebook.com/{page_id}/posts'
+    params = {'EAAS4lSZAw7PUBO084REr3KgVj06WVzL09yZBLEY2jhaxM0NVSTUTmuiLUkDl0n97pv1xHzwNZBVkwpZADYr1FsAfHNarZBQriL9Ob8Qq0riTRZBRYDYjrou4amsTQOO3VKTpbxgs1BF5u0isGllKZArOvbYVHcnK2hALmK4XfHnZCJTsRPptATj80AtRZBmUaXir94HJX8sDazhtE468xO4aznqeeSiZAb39gO8Kdk4GKLSWEld7eS8FZCoBFs6ZCGoxRBgefI3gx7AZD': access_token}
+    response = requests.get(url, params=params)
+    return response.json()
+
+def fetch_weather_data(api_key, location):
+    url = f'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{location}'
+    params = {'8D7MK5WEBZNC6BW2FCHVMFN7Z': api_key}
+    response = requests.get(url, params=params)
+    return response.json()
+
+#def fetch_places_data(api_key, location):
+ #   url = f'https://maps.googleapis.com/maps/api/place/textsearch/json'
+  #  params = {'query': location, 'key': api_key}
+   # response = requests.get(url, params=params)
+    #return response.json()
+
+# Spider for Scraping News
+class DisasterSpider(scrapy.Spider):
+    name = "disaster_spider"
+    
+    # List of URLs for different news channels
+    start_urls = [
+        'https://www.ndtv.com/latest', 
+        'https://timesofindia.indiatimes.com', 
+        'https://www.hindustantimes.com/latest-news'
+        'https://mausam.imd.gov.in/'
+        'https://reliefweb.int/disaster/fl-2024-000109-ind'
+        'https://reliefweb.int/disaster/tc-2024-000083-bgd'
+
+    ]
+    
+    keywords = ['earthquake', 'flood', 'cyclone', 'landslide', 'tsunami', 'drought']
+
+    def parse(self, response):
+        # Depending on the website, modify selectors accordingly
+        if 'ndtv' in response.url:
+            articles = response.css('div.news_Itm h2.newsHdng')
+        elif 'timesofindia' in response.url:
+            articles = response.css('span.w_tle')
+        elif 'hindustantimes' in response.url:
+            articles = response.css('div.media-heading.headingfour')
+
+        for article in articles:
+            headline = article.css('a::text').get().strip()
+            link = article.css('a::attr(href)').get()
+
+            if any(keyword in headline.lower() for keyword in self.keywords):
+                data = {
+                    'headline': headline,
+                    'url': response.urljoin(link),
+                    'source': response.url
+                }
+
+                # Store in MongoDB
+                collection.insert_one(data)
+
+                # Call APIs for additional data (e.g., weather, analysis)
+                city = 'Delhi'  # You can customize this for different regions
+                weather_data = fetch_weather_api(city)
+                
+                # Add these results to the MongoDB document
+                data.update({'weather': weather_data, 'nlu_analysis': analysis})
+                collection.update_one({'_id': data['_id']}, {'$set': data})
+                
+
+# Script to Fetch Tweets, Google News, and Weather data
+'''def scrape_external_apis():
+    # Twitter scraping
+    twitter_api = connect_to_twitter_api()
+    tweets = twitter_api.search_tweets(q=' OR '.join(['earthquake', 'flood', 'cyclone']), lang='en', count=10)
+    for tweet in tweets:
+        tweet_data = {
+            'source': 'Twitter',
+            'username': tweet.user.screen_name,
+            'text': tweet.text,
+            'url': f"https://twitter.com/{tweet.user.screen_name}/status/{tweet.id}"
+        }
+        collection.insert_one(tweet_data)'''
+
+# Main function to initiate both scraping and API calls
+if __name__ == '__main__':
+    # Scrapy spider for scraping websites
+    process = CrawlerProcess()
+    process.crawl(DisasterSpider)
+    process.start()
+
+    # Fetch tweets, google news, and weather data from APIs
+    scrape_external_apis()
