@@ -2,24 +2,19 @@ import scrapy
 from pymongo import MongoClient
 import requests
 
-# MongoDB connection
 client = MongoClient('mongodb+srv://disasterData:sihdata2024@techtitans.jnat6.mongodb.net/')
 db = client['disasterData']
 collection = db['TechTitans']
 
-# Visual Crossing Weather API
 weather_api_key = '8D7MK5WEBZNC6BW2FCHVMFN7Z'
 weather_url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline'
 
-# Facebook API Token
 facebook_token = 'EAAS4lSZAw7PUBO084REr3KgVj06WVzL09yZBLEY2jhaxM0NVSTUTmuiLUkDl0n97pv1xHzwNZBVkwpZADYr1FsAfHNarZBQriL9Ob8Qq0riTRZBRYDYjrou4amsTQOO3VKTpbxgs1BF5u0isGllKZArOvbYVHcnK2hALmK4XfHnZCJTsRPptATj80AtRZBmUaXir94HJX8sDazhtE468xO4aznqeeSiZAb39gO8Kdk4GKLSWEld7eS8FZCoBFs6ZCGoxRBgefI3gx7AZD'
 facebook_url = 'https://graph.facebook.com/v11.0/me/feed'
 
-# Instagram API Token and URL
 instagram_token = 'EAAS4lSZAw7PUBO7etXirCUzVqILefGbWHpAoKux5wr6YiIbDtPSMseuWyFlDqMQNGFD68kHItobIoyjXTzziJBbNBgjgltUQQ0gKI0U5Khfqv94jZC0aaHH5rDMdLGbbm2rmq2bmbN1eOjeZA78AqGIykZA4N8OZARBIbXV2ZBR1mrW5MQ0FBwD8CGKFYd5ZC1OfYZAAv5zHU3Olx0fV9z3B50Y4oQZDZD'
 instagram_url = 'https://graph.instagram.com/me/media'
 
-# Scrapy Spider Class
 class DisasterSpider(scrapy.Spider):
     name = "disaster_spider"
     
