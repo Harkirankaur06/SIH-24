@@ -1,7 +1,6 @@
 import scrapy
 from pymongo import MongoClient
 import requests
-import json
 
 # MongoDB connection
 client = MongoClient('mongodb+srv://disasterData:sihdata2024@techtitans.jnat6.mongodb.net/')
@@ -24,8 +23,7 @@ instagram_url = 'https://graph.instagram.com/me/media'
 class DisasterSpider(scrapy.Spider):
     name = "disaster_spider"
     
-    start_urls = [
-        # Add your news channels and IMD URLs here
+    start_urls =[
         'https://www.ndtv.com/latest',
         'https://timesofindia.indiatimes.com/', 
         'https://www.hindustantimes.com/latest-news',
@@ -34,7 +32,6 @@ class DisasterSpider(scrapy.Spider):
         'https://reliefweb.int/disaster/tc-2024-000083-bgd'
     ]
     
-    # List of natural disaster keywords
     keywords = ['earthquake', 'flood', 'cyclone', 'landslide', 'tsunami', 'drought']
     
     def parse(self, response):
@@ -56,8 +53,6 @@ class DisasterSpider(scrapy.Spider):
         collection.insert_one(article_data)
         yield article_data
 
-        # Fetch data from other APIs
-        # self.fetch_twitter_data()
         self.fetch_weather_data()
         self.fetch_facebook_data()
 
@@ -78,7 +73,6 @@ class DisasterSpider(scrapy.Spider):
             collection.insert_one(post_data)
 
     def fetch_instagram_data(self):
-        # Replace 'fields' with the fields you need
         response = requests.get(f'{instagram_url}?fields=id,caption,media_type,media_url,permalink,timestamp&access_token={instagram_token}')
         instagram_data = response.json()
         for media in instagram_data.get('data', []):
