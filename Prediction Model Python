@@ -1,0 +1,79 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from prophet import Prophet
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error, accuracy_score
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeClassifier
+
+# Data Collection and Preprocessing
+data = pd.read_csv('disaster_data.csv')
+
+# Convert 'date' column to datetime format
+data['date'] = pd.to_datetime(data['date'])
+
+# Fill missing values (if any)
+data.fillna(method='ffill', inplace=True)
+
+# Normalize the 'severity' column
+scaler = MinMaxScaler()
+data['severity_normalized'] = scaler.fit_transform(data[['severity']])
+
+# Time Series Forecasting with Prophet
+# Prepare data for Prophet
+df = data[['date', 'severity']]
+df.columns = ['ds', 'y']  # Prophet requires columns 'ds' (date) and 'y' (value to predict)
+
+# Fit the Prophet model
+prophet_model = Prophet()
+prophet_model.fit(df)
+
+# Forecast future severity for the next 365 days
+future = prophet_model.make_future_dataframe(periods=365)
+forecast = prophet_model.predict(future)
+
+# Plot the forecast
+prophet_model.plot(forecast)
+plt.title('Disaster Severity Forecast')
+plt.show()
+
+# Step 3: Linear Regression for Resource Estimation
+# Preparing data for regression (predicting resources_needed based on severity)
+X = data[['severity_normalized']]  # Use normalized severity as input feature
+y = data['resources_needed']  # Target variable (resources needed)
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Build a Linear Regression model
+linear_model = LinearRegression()
+linear_model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = linear_model.predict(X_test)
+
+# Calculate Mean Squared Error (MSE) for the regression model
+mse = mean_squared_error(y_test, y_pred)
+print(f'Linear Regression Mean Squared Error: {mse}')
+
+#  Decision Tree Classification for Disaster Type Prediction
+# Preparing data for classification (predict disaster type based on severity, resources needed)
+X_class = data[['severity_normalized', 'resources_needed']]  # Features for classification
+y_class = data['disaster_type']  # Target variable (disaster type)
+
+# Split data into training and testing sets
+X_train_class, X_test_class, y_train_class, y_test_class = train_test_split(X_class, y_class, test_size=0.2, random_state=42)
+
+# Build a Decision Tree classifier
+dt_classifier = DecisionTreeClassifier()
+dt_classifier.fit(X_train_class, y_train_class)
+
+# Make predictions on the test set
+y_pred_class = dt_classifier.predict(X_test_class)
+
+# Calculate the accuracy of the classification model
+accuracy = accuracy_score(y_test_class, y_pred_class)
+print(f'Decision Tree Classification Accuracy: {accuracy}')
