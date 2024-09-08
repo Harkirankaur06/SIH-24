@@ -1,6 +1,6 @@
-import csv
 import hashlib
-import os
+from pymongo import MongoClient
+import getpass
 
 # Function to hash the password
 def hash_password(password):
@@ -13,27 +13,31 @@ def register_user(username, password, confirm_password):
         return
 
     hashed_password = hash_password(password)
-    user_data = [username, hashed_password]
 
-    # Write to CSV file
-    with open('C:\\Users\\Harkiran\\Documents\\SIH-24\\SIH-24\\users.csv', 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(user_data)
+    # Connect to MongoDB
+    client = MongoClient('mongodb+srv://userData:sihdata2024@techtitans.jnat6.mongodb.net/')
+    db = client['userData']
+    collection = db['users']
 
-    # Convert CSV to binary
-    with open('C:\\Users\\Harkiran\\Documents\\SIH-24\\SIH-24\\users.csv', 'rb') as csvfile:
-        binary_data = csvfile.read()
-    
-    with open('C:\\Users\\Harkiran\\Documents\\SIH-24\\SIH-24\\users_binary.csv', 'wb') as binaryfile:
-        binaryfile.write(binary_data)
+    # Check if username already exists
+    if collection.find_one({"username": username}):
+        print("Username already exists!")
+        return
+
+    # Insert user data into MongoDB
+    user_data = {
+        "username": username,
+        "password": hashed_password
+    }
+    collection.insert_one(user_data)
     
     print("User registered successfully!")
 
 # Function to get user input
 def get_user_input():
     username = input("Enter username: ")
-    password = input("Enter password: ")
-    confirm_password = input("Confirm password: ")
+    password = getpass.getpass("Enter password: ")  # Hides input for password
+    confirm_password = getpass.getpass("Confirm password: ")  # Hides input for password
     return username, password, confirm_password
 
 if __name__ == "__main__":
