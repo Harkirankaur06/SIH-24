@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Register Form</title>
+    <link rel="stylesheet" href="4.css">
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="Logo" id="logo">
+    </header>
+    
+    <div class="container">
+        <div class="form-container" id="login-form">
+            <h2>Login</h2>
+            <form id="login">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+                
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                
+                <button type="submit">Login</button>
+                <p><a href="#" id="forgot-password">Forgot Password?</a></p>
+                <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
+            </form>
+        </div>
+        
+        <div class="form-container hidden" id="register-form">
+            <h2>Register</h2>
+            <form id="register">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+                
+                <label for="new-password">Set Password:</label>
+                <input type="password" id="new-password" name="new-password" required>
+                
+                <label for="confirm-password">Confirm Password:</label>
+                <input type="password" id="confirm-password" name="confirm-password" required>
+                
+                <button type="submit">Register</button>
+                <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+                <p><a href="4 ci.html">Go to Current Info</a></p>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>Contact us at: <a href="mailto:support@example.com">support@example.com</a></p>
+        <p>Phone: +1 234 567 890</p>
+    </footer>
+    
+    <script src="4.js"></script>
+</body>
+</html>
