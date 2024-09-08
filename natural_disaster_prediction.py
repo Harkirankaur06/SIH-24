@@ -11,7 +11,7 @@ from pycaret.regression import setup, compare_models
 from autots import AutoTS
 
 # Step 1: Data Collection and Preprocessing
-data = pd.read_csv('disaster_data.csv')
+data = pd.read_csv('C:\\Users\\yuvra\\Desktop\\disaster_data.csv')
 
 # Example of preprocessing steps
 data['date'] = pd.to_datetime(data['date'])
@@ -81,7 +81,7 @@ print(f'Mean Squared Error for LSTM: {mse}')
 # Step 5: Regression Model for Resource Prediction using PyCaret
 # Set up PyCaret for regression
 data_for_pycaret = data[['severity', 'resources_needed']]  # Simplified for illustration
-exp1 = setup(data_for_pycaret, target='resources_needed', silent=True)
+exp1 = setup(data_for_pycaret, target='resources_needed') #, silent=True)
 
 # Compare different models
 best_model = compare_models()
