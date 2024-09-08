@@ -1,0 +1,69 @@
+// import all necessary libraries 
+
+public class DisasterPrediction {
+
+    public static void main(String[] args) {
+        try {
+            // Step 1: Load disaster data
+            DataSource source = new DataSource("disaster_data.arff");
+            Instances data = source.getDataSet();
+
+            // Setting the class index to the last attribute (severity or resources_needed)
+            data.setClassIndex(data.numAttributes() - 1);
+
+            // Step 2: Decision Tree for Disaster Prediction (Severity)
+            System.out.println("---- Decision Tree Model ----");
+            Classifier j48 = new J48(); // Weka's J48 Decision Tree
+            j48.buildClassifier(data);
+            evaluateModel(j48, data);
+
+            // Step 3: Linear Regression for Resource Estimation
+            System.out.println("---- Linear Regression Model ----");
+            LinearRegression lr = new LinearRegression();
+            lr.buildClassifier(data);
+            evaluateModel(lr, data);
+
+            // Step 4: Simple Time Series Forecasting using Linear Regression
+            System.out.println("---- Time Series Forecasting (Linear Regression) ----");
+            SimpleRegression regression = new SimpleRegression();
+            for (int i = 0; i < data.numInstances(); i++) {
+                Instance instance = data.instance(i);
+                regression.addData(i, instance.value(data.classIndex())); // Add data points to regression
+            }
+
+            // Predict future values (e.g., for next 10 days)
+            for (int i = data.numInstances(); i < data.numInstances() + 10; i++) {
+                double predicted = regression.predict(i);
+                System.out.println("Prediction for day " + i + ": " + predicted);
+            }
+
+            // Step 5: Spline Interpolation for Resource Estimation
+            System.out.println("---- Spline Interpolation for Resource Estimation ----");
+            SplineInterpolator interpolator = new SplineInterpolator();
+            double[] xData = new double[data.numInstances()];
+            double[] yData = new double[data.numInstances()];
+            for (int i = 0; i < data.numInstances(); i++) {
+                xData[i] = i;
+                yData[i] = data.instance(i).value(data.classIndex());
+            }
+
+            PolynomialSplineFunction splineFunction = interpolator.interpolate(xData, yData);
+            for (int i = data.numInstances(); i < data.numInstances() + 10; i++) {
+                double predicted = splineFunction.value(i);
+                System.out.println("Spline prediction for day " + i + ": " + predicted);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to evaluate and print model performance
+    private static void evaluateModel(Classifier model, Instances data) throws Exception {
+        for (int i = 0; i < data.numInstances(); i++) {
+            double actual = data.instance(i).classValue();
+            double predicted = model.classifyInstance(data.instance(i));
+            System.out.println("Instance " + (i + 1) + ": Actual = " + actual + ", Predicted = " + predicted);
+        }
+    }
+}
