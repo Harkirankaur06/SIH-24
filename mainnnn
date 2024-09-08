@@ -1,0 +1,92 @@
+import scrapy
+from pymongo import MongoClient
+import tweepy
+import requests
+import json
+
+# MongoDB connection
+client = MongoClient('mongodb://localhost:27017/')
+db = client['disasterDB']
+collection = db['disaster_data']
+
+# Tweepy Authentication
+'''auth = tweepy.OAuth1UserHandler(
+    consumer_key='your_consumer_key',
+    consumer_secret='your_consumer_secret',
+    access_token='your_access_token',
+    access_token_secret='your_access_token_secret'
+)
+twitter_api = tweepy.API(auth)'''
+
+# Visual Crossing Weather API
+weather_api_key = '8D7MK5WEBZNC6BW2FCHVMFN7Z'
+weather_url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline'
+
+# Facebook API Token
+facebook_token = 'EAAS4lSZAw7PUBO084REr3KgVj06WVzL09yZBLEY2jhaxM0NVSTUTmuiLUkDl0n97pv1xHzwNZBVkwpZADYr1FsAfHNarZBQriL9Ob8Qq0riTRZBRYDYjrou4amsTQOO3VKTpbxgs1BF5u0isGllKZArOvbYVHcnK2hALmK4XfHnZCJTsRPptATj80AtRZBmUaXir94HJX8sDazhtE468xO4aznqeeSiZAb39gO8Kdk4GKLSWEld7eS8FZCoBFs6ZCGoxRBgefI3gx7AZD'
+facebook_url = 'https://graph.facebook.com/v11.0/me/feed'
+
+# Scrapy Spider Class
+class DisasterSpider(scrapy.Spider):
+    name = "disaster_spider"
+    
+    start_urls = [
+        # Add your news channels and IMD URLs here
+        'https://www.ndtv.com/latest',  # NDTV News
+        'https://timesofindia.indiatimes.com/',  # Times of India
+        'https://mausam.imd.gov.in/'  # Indian Meteorological Department
+    ]
+    
+    # List of natural disaster keywords
+    keywords = ['earthquake', 'flood', 'cyclone', 'landslide', 'tsunami', 'drought']
+    
+    def parse(self, response):
+        for article in response.xpath('//a/@href').extract():
+            if any(keyword in article.lower() for keyword in self.keywords):
+                yield scrapy.Request(response.urljoin(article), callback=self.parse_article)
+    
+    def parse_article(self, response):
+        title = response.xpath('//title/text()').get()
+        body = response.xpath('//p/text()').getall()
+        body_text = ' '.join(body)
+
+        # Store scraped data in MongoDB
+        article_data = {
+            'url': response.url,
+            'title': title,
+            'body': body_text
+        }
+        collection.insert_one(article_data)
+        yield article_data
+
+        # Fetch data from other APIs
+        # self.fetch_twitter_data()
+        self.fetch_weather_data()
+        self.fetch_facebook_data()
+    
+    '''def fetch_twitter_data(self):
+        tweets = twitter_api.search_tweets(q='disaster', lang='en', count=5)
+        for tweet in tweets:
+            tweet_data = {
+                'text': tweet.text,
+                'user': tweet.user.screen_name
+            }
+            collection.insert_one(tweet_data)'''
+
+    def fetch_weather_data(self):
+        location = 'India'
+        response = requests.get(f'{weather_url}/{location}?key={weather_api_key}')
+        weather_data = response.json()
+        collection.insert_one(weather_data)
+    
+    def fetch_facebook_data(self):
+        response = requests.get(f'{facebook_url}?access_token={facebook_token}')
+        fb_data = respoonse.json()
+        for post in fb_data['data']:
+            post_data = {
+                'message': post.get('message', ''),
+                'created_time': post.get('created_time', '')
+            }
+            collection.insert_one(post_data)
+
+
