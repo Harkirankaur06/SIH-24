@@ -5,28 +5,23 @@ import json
 import spacy
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-# MongoDB connection
 client = MongoClient('mongodb+srv://disasterData:sihdata2024@techtitans.jnat6.mongodb.net/')
 db = client['disasterData']
 collection = db['TechTitans']
 
-# Visual Crossing Weather API
 weather_api_key = '8D7MK5WEBZNC6BW2FCHVMFN7Z'
 weather_url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline'
 
-# Facebook API Token
 facebook_token = 'EAAS4lSZAw7PUBO084REr3KgVj06WVzL09yZBLEY2jhaxM0NVSTUTmuiLUkDl0n97pv1xHzwNZBVkwpZADYr1FsAfHNarZBQriL9Ob8Qq0riTRZBRYDYjrou4amsTQOO3VKTpbxgs1BF5u0isGllKZArOvbYVHcnK2hALmK4XfHnZCJTsRPptATj80AtRZBmUaXir94HJX8sDazhtE468xO4aznqeeSiZAb39gO8Kdk4GKLSWEld7eS8FZCoBFs6ZCGoxRBgefI3gx7AZD'
 facebook_url = 'https://graph.facebook.com/v11.0/me/feed'
 
-# Instagram API Token and URL
 instagram_token = 'EAAS4lSZAw7PUBO7etXirCUzVqILefGbWHpAoKux5wr6YiIbDtPSMseuWyFlDqMQNGFD68kHItobIoyjXTzziJBbNBgjgltUQQ0gKI0U5Khfqv94jZC0aaHH5rDMdLGbbm2rmq2bmbN1eOjeZA78AqGIykZA4N8OZARBIbXV2ZBR1mrW5MQ0FBwD8CGKFYd5ZC1OfYZAAv5zHU3Olx0fV9z3B50Y4oQZDZD'
 instagram_url = 'https://graph.instagram.com/me/media'
 
-# Load SpaCy Model and Sentiment Analyzer
+#Sentiment Analyzer
 nlp = spacy.load('en_core_web_sm')
 analyzer = SentimentIntensityAnalyzer()
 
-# Scrapy Spider Class
 class DisasterSpider(scrapy.Spider):
     name = "disaster_spider"
     
@@ -39,7 +34,6 @@ class DisasterSpider(scrapy.Spider):
         'https://reliefweb.int/disaster/tc-2024-000083-bgd'
     ]
     
-    # List of natural disaster keywords
     keywords = ['earthquake', 'flood', 'cyclone', 'landslide', 'tsunami', 'drought']
     
     def parse(self, response):
@@ -52,12 +46,12 @@ class DisasterSpider(scrapy.Spider):
         body = response.xpath('//p/text()').getall()
         body_text = ' '.join(body)
 
-        # Text Preprocessing and NLP tasks
+        # Text Preprocessing 
         preprocessed_text = self.preprocess_text(body_text)
         sentiment = self.analyze_sentiment(preprocessed_text)
         entities = self.extract_entities(preprocessed_text)
 
-        # Store data in MongoDB
+        # store data in MongoDB
         article_data = {
             'url': response.url,
             'title': title,
@@ -69,29 +63,20 @@ class DisasterSpider(scrapy.Spider):
         collection.insert_one(article_data)
         yield article_data
 
-        # Fetch data from other APIs
         self.fetch_weather_data()
         self.fetch_facebook_data()
 
     def preprocess_text(self, text):
-        """
-        Function to preprocess text (tokenization, lemmatization, removing stopwords).
-        """
+        #preprocess text (tokenization, lemmatization, removing stopwords).
         doc = nlp(text)
         tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
         return ' '.join(tokens)
 
     def analyze_sentiment(self, text):
-        """
-        Function to perform sentiment analysis using VADER.
-        """
         sentiment_scores = analyzer.polarity_scores(text)
         return sentiment_scores
 
     def extract_entities(self, text):
-        """
-        Function to extract named entities from the text using SpaCy NER.
-        """
         doc = nlp(text)
         entities = [{'text': ent.text, 'label': ent.label_} for ent in doc.ents]
         return entities
